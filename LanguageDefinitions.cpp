@@ -1922,23 +1922,48 @@ const TextEditor::LanguageDefinition &
     static bool               inited = false;
     static LanguageDefinition langDef;
     if (!inited) {
-        langDef.mKeywords.clear();
-        langDef.mIdentifiers.clear();
+        static const char *const keywords[] = {
+            "TAG",  "tag",  "END",   "end",   "JMP", "jmp", "JZ",     "jz",
+            "MOV",  "mov",  "CALCL", "calcl", "NOT", "not", "BITNOT", "bitnot",
+            "PUTC", "putc", "CALL",  "call",  "RET", "ret", "to",     "TO"};
+        for (auto &k : keywords) {
+            langDef.mKeywords.insert(k);
+        }
 
-        langDef.mTokenRegexStrings.push_back(
-            std::make_pair<std::string, PaletteIndex>(R"##(\"(\\.|[^\"])*\")##",
-                                                      PaletteIndex::String));
+        static const char *const identifiers[] = {
+            "NUM", "num", "pc", "PC", "sp", "SP", "bp", "BP", "flag", "FLAG",
+            "xa",  "XA",  "xb", "XB", "xc", "XC", "xd", "XD"
+
+        };
+        for (auto &k : identifiers) {
+            Identifier id;
+            id.mDeclaration = "Built-in Instruction";
+            langDef.mIdentifiers.insert(std::make_pair(std::string(k), id));
+        }
         langDef.mTokenRegexStrings.push_back(
             std::make_pair<std::string, PaletteIndex>(
-                R"##([+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)([eE][+-]?[0-9]+)?)##",
+                R"##(($|@)?\"(\\.|[^\"])*\")##", PaletteIndex::String));
+        langDef.mTokenRegexStrings.push_back(std::make_pair<std::string,
+                                                            PaletteIndex>(
+            R"##([+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)([eE][+-]?[0-9]+)?[fF]?)##",
+            PaletteIndex::Number));
+        langDef.mTokenRegexStrings.push_back(
+            std::make_pair<std::string, PaletteIndex>(
+                R"##([+-]?[0-9]+[Uu]?[lL]?[lL]?)##", PaletteIndex::Number));
+        langDef.mTokenRegexStrings.push_back(
+            std::make_pair<std::string, PaletteIndex>(
+                R"##(0[0-7]+[Uu]?[lL]?[lL]?)##", PaletteIndex::Number));
+        langDef.mTokenRegexStrings.push_back(
+            std::make_pair<std::string, PaletteIndex>(
+                R"##(0[xX][0-9a-fA-F]+[uU]?[lL]?[lL]?)##",
                 PaletteIndex::Number));
         langDef.mTokenRegexStrings.push_back(
             std::make_pair<std::string, PaletteIndex>(
-                R"##([\[\]\{\}\!\%\^\&\*\(\)\-\+\=\~\|\<\>\?\/\;\,\.\:])##",
-                PaletteIndex::Punctuation));
+                R"##([a-zA-Z_][a-zA-Z0-9_]*)##", PaletteIndex::Identifier));
         langDef.mTokenRegexStrings.push_back(
-            std::make_pair<std::string, PaletteIndex>(R"##(false|true)##",
-                                                      PaletteIndex::Keyword));
+            std::make_pair<std::string, PaletteIndex>(
+                R"##([\[\]\{\}\!\%\^\&\*\(\)\-\+\=\~\|\<\>\?\/\;\,\.])##",
+                PaletteIndex::Punctuation));
 
         langDef.mCommentStart      = "/*";
         langDef.mCommentEnd        = "*/";
@@ -1946,7 +1971,7 @@ const TextEditor::LanguageDefinition &
 
         langDef.mCaseSensitive = true;
 
-        langDef.mName = "Json";
+        langDef.mName = "BrainLuck";
 
         inited = true;
     }
