@@ -1924,7 +1924,7 @@ const TextEditor::LanguageDefinition &
     if (!inited) {
         static const char *const keywords[] = {
             "TAG",  "tag",  "END",   "end",   "JMP", "jmp", "JZ",     "jz",
-            "MOV",  "mov",  "CALCL", "calcl", "NOT", "not", "BITNOT", "bitnot",
+            "MOV",  "mov",  "CALC", "calc", "NOT", "not", "BITNOT", "bitnot",
             "PUTC", "putc", "CALL",  "call",  "RET", "ret", "to",     "TO"};
         for (auto &k : keywords) {
             langDef.mKeywords.insert(k);
