@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <boost/regex.hpp>
-#include <set>
 #include <string>
 
 #include "TextEditor.h"
@@ -51,43 +50,42 @@ void TextEditor::SetPalette(PaletteId aValue) {
 }
 
 void TextEditor::SetLanguageDefinition(LanguageDefinitionId aValue) {
-    mLanguageDefinitionId = aValue;
-    switch (mLanguageDefinitionId) {
+    switch (aValue) {
     case LanguageDefinitionId::None:
         mLanguageDefinition = nullptr;
         return;
     case LanguageDefinitionId::Cpp:
-        mLanguageDefinition = &(LanguageDefinition::Cpp());
+        mLanguageDefinition = LanguageDefinition::Cpp();
         break;
     case LanguageDefinitionId::C:
-        mLanguageDefinition = &(LanguageDefinition::C());
+        mLanguageDefinition = LanguageDefinition::C();
         break;
     case LanguageDefinitionId::Cs:
-        mLanguageDefinition = &(LanguageDefinition::Cs());
+        mLanguageDefinition = LanguageDefinition::Cs();
         break;
     case LanguageDefinitionId::Python:
-        mLanguageDefinition = &(LanguageDefinition::Python());
+        mLanguageDefinition = LanguageDefinition::Python();
         break;
     case LanguageDefinitionId::Lua:
-        mLanguageDefinition = &(LanguageDefinition::Lua());
+        mLanguageDefinition = LanguageDefinition::Lua();
         break;
     case LanguageDefinitionId::Json:
-        mLanguageDefinition = &(LanguageDefinition::Json());
+        mLanguageDefinition = LanguageDefinition::Json();
         break;
     case LanguageDefinitionId::Sql:
-        mLanguageDefinition = &(LanguageDefinition::Sql());
+        mLanguageDefinition = LanguageDefinition::Sql();
         break;
     case LanguageDefinitionId::AngelScript:
-        mLanguageDefinition = &(LanguageDefinition::AngelScript());
+        mLanguageDefinition = LanguageDefinition::AngelScript();
         break;
     case LanguageDefinitionId::Glsl:
-        mLanguageDefinition = &(LanguageDefinition::Glsl());
+        mLanguageDefinition = LanguageDefinition::Glsl();
         break;
     case LanguageDefinitionId::Hlsl:
-        mLanguageDefinition = &(LanguageDefinition::Hlsl());
+        mLanguageDefinition = LanguageDefinition::Hlsl();
         break;
     case LanguageDefinitionId::BrainLuck:
-        mLanguageDefinition = &(LanguageDefinition::BrainLuck());
+        mLanguageDefinition = LanguageDefinition::BrainLuck();
     }
 
     mRegexList->mValue.clear();

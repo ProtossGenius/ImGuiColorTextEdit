@@ -4,8 +4,6 @@
 #include <array>
 #include <cassert>
 #include <cmath>
-#include <iostream>
-#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -51,16 +49,13 @@ class IMGUI_API TextEditor {
     inline void SetShowLineNumbersEnabled(bool aValue) {
         mShowLineNumbers = aValue;
     }
-    inline bool IsShowLineNumbersEnabled() const { return mShowLineNumbers; }
-    inline void SetShortTabsEnabled(bool aValue) { mShortTabs = aValue; }
-    inline bool IsShortTabsEnabled() const { return mShortTabs; }
-    inline int  GetLineCount() const { return mLines.size(); }
-    void        SetPalette(PaletteId aValue);
-    PaletteId   GetPalette() const { return mPaletteId; }
-    void        SetLanguageDefinition(LanguageDefinitionId aValue);
-    LanguageDefinitionId GetLanguageDefinition() const {
-        return mLanguageDefinitionId;
-    };
+    void         SetLanguageDefinition(LanguageDefinitionId aValue);
+    inline bool  IsShowLineNumbersEnabled() const { return mShowLineNumbers; }
+    inline void  SetShortTabsEnabled(bool aValue) { mShortTabs = aValue; }
+    inline bool  IsShortTabsEnabled() const { return mShortTabs; }
+    inline int   GetLineCount() const { return mLines.size(); }
+    void         SetPalette(PaletteId aValue);
+    PaletteId    GetPalette() const { return mPaletteId; }
     const char  *GetLanguageDefinitionName() const;
     void         SetTabSize(int aValue);
     inline int   GetTabSize() const { return mTabSize; }
@@ -297,17 +292,17 @@ class IMGUI_API TextEditor {
         std::vector<TokenRegexString> mTokenRegexStrings;
         bool                          mCaseSensitive = true;
 
-        static const LanguageDefinition &Cpp();
-        static const LanguageDefinition &Hlsl();
-        static const LanguageDefinition &Glsl();
-        static const LanguageDefinition &Python();
-        static const LanguageDefinition &C();
-        static const LanguageDefinition &Sql();
-        static const LanguageDefinition &AngelScript();
-        static const LanguageDefinition &Lua();
-        static const LanguageDefinition &Cs();
-        static const LanguageDefinition &Json();
-        static const LanguageDefinition &BrainLuck();
+        static std::unique_ptr<LanguageDefinition> Cpp();
+        static std::unique_ptr<LanguageDefinition> Hlsl();
+        static std::unique_ptr<LanguageDefinition> Glsl();
+        static std::unique_ptr<LanguageDefinition> Python();
+        static std::unique_ptr<LanguageDefinition> C();
+        static std::unique_ptr<LanguageDefinition> Sql();
+        static std::unique_ptr<LanguageDefinition> AngelScript();
+        static std::unique_ptr<LanguageDefinition> Lua();
+        static std::unique_ptr<LanguageDefinition> Cs();
+        static std::unique_ptr<LanguageDefinition> Json();
+        static std::unique_ptr<LanguageDefinition> BrainLuck();
     };
 
     enum class UndoOperationType { Add, Delete };
@@ -424,7 +419,9 @@ class IMGUI_API TextEditor {
     void OnLineChanged(bool aBeforeChange, int aLine, int aColumn,
                        int aCharCount, bool aDeleted);
     void MergeCursorsIfPossible();
-
+    void SetLanguageDefintion(std::unique_ptr<LanguageDefinition> def) {
+        this->mLanguageDefinition = std::move(def);
+    }
     void AddUndo(UndoRecord &aValue);
 
     void Colorize(int aFromLine = 0, int aCount = -1);
@@ -475,13 +472,12 @@ class IMGUI_API TextEditor {
     bool        mCursorOnBracket       = false;
     Coordinates mMatchingBracketCoords;
 
-    int                       mColorRangeMin = 0;
-    int                       mColorRangeMax = 0;
-    bool                      mCheckComments = true;
-    PaletteId                 mPaletteId;
-    Palette                   mPalette;
-    LanguageDefinitionId      mLanguageDefinitionId;
-    const LanguageDefinition *mLanguageDefinition = nullptr;
+    int                                 mColorRangeMin = 0;
+    int                                 mColorRangeMax = 0;
+    bool                                mCheckComments = true;
+    PaletteId                           mPaletteId;
+    Palette                             mPalette;
+    std::unique_ptr<LanguageDefinition> mLanguageDefinition = nullptr;
 
     inline bool IsHorizontalScrollbarVisible() const {
         return mCurrentSpaceWidth > mContentWidth;
