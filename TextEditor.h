@@ -11,132 +11,8 @@
 #include <vector>
 
 class IMGUI_API TextEditor {
-  public:
-    // ------------- Exposed API ------------- //
-
-    TextEditor();
-    ~TextEditor();
-
-    enum class PaletteId { Dark, Light, Mariana, RetroBlue };
-    enum class LanguageDefinitionId {
-        None,
-        Cpp,
-        C,
-        Cs,
-        Python,
-        Lua,
-        Json,
-        Sql,
-        AngelScript,
-        Glsl,
-        Hlsl,
-        BrainLuck
-    };
-    enum class SetViewAtLineMode {
-        FirstVisibleLine,
-        Centered,
-        LastVisibleLine
-    };
-
-    inline void SetReadOnlyEnabled(bool aValue) { mReadOnly = aValue; }
-    inline bool IsReadOnlyEnabled() const { return mReadOnly; }
-    inline void SetAutoIndentEnabled(bool aValue) { mAutoIndent = aValue; }
-    inline bool IsAutoIndentEnabled() const { return mAutoIndent; }
-    inline void SetShowWhitespacesEnabled(bool aValue) {
-        mShowWhitespaces = aValue;
-    }
-    inline bool IsShowWhitespacesEnabled() const { return mShowWhitespaces; }
-    inline void SetShowLineNumbersEnabled(bool aValue) {
-        mShowLineNumbers = aValue;
-    }
-    void         SetLanguageDefinition(LanguageDefinitionId aValue);
-    inline bool  IsShowLineNumbersEnabled() const { return mShowLineNumbers; }
-    inline void  SetShortTabsEnabled(bool aValue) { mShortTabs = aValue; }
-    inline bool  IsShortTabsEnabled() const { return mShortTabs; }
-    inline int   GetLineCount() const { return mLines.size(); }
-    void         SetPalette(PaletteId aValue);
-    PaletteId    GetPalette() const { return mPaletteId; }
-    const char  *GetLanguageDefinitionName() const;
-    void         SetTabSize(int aValue);
-    inline int   GetTabSize() const { return mTabSize; }
-    void         SetLineSpacing(float aValue);
-    inline float GetLineSpacing() const { return mLineSpacing; }
-
-    inline static void SetDefaultPalette(PaletteId aValue) {
-        defaultPalette = aValue;
-    }
-    inline static PaletteId GetDefaultPalette() { return defaultPalette; }
-
-    void        SelectAll();
-    void        SelectLine(int aLine);
-    void        SelectRegion(int aStartLine, int aStartChar, int aEndLine,
-                             int aEndChar);
-    void        SelectNextOccurrenceOf(const char *aText, int aTextSize,
-                                       bool aCaseSensitive = true);
-    void        SelectAllOccurrencesOf(const char *aText, int aTextSize,
-                                       bool aCaseSensitive = true);
-    bool        AnyCursorHasSelection() const;
-    bool        AllCursorsHaveSelection() const;
-    void        ClearExtraCursors();
-    void        ClearSelections();
-    void        SetCursorPosition(int aLine, int aCharIndex);
-    inline void GetCursorPosition(int &outLine, int &outColumn) const {
-        auto coords = GetSanitizedCursorCoordinates();
-        outLine     = coords.mLine;
-        outColumn   = coords.mColumn;
-    }
-    int  GetFirstVisibleLine();
-    int  GetLastVisibleLine();
-    void SetViewAtLine(int aLine, SetViewAtLineMode aMode);
-
-    void        Copy();
-    void        Cut();
-    void        Paste();
-    void        Undo(int aSteps = 1);
-    void        Redo(int aSteps = 1);
-    inline bool CanUndo() const { return !mReadOnly && mUndoIndex > 0; };
-    inline bool CanRedo() const {
-        return !mReadOnly && mUndoIndex < (int) mUndoBuffer.size();
-    };
-    inline int GetUndoIndex() const { return mUndoIndex; };
-
-    void        SetText(const std::string &aText);
-    std::string GetText() const;
-
-    void SetTextLines(const std::vector<std::string> &aLines);
-    std::vector<std::string> GetTextLines() const;
-
-    bool Render(const char *aTitle, bool aParentIsFocused = false,
-                const ImVec2 &aSize = ImVec2(), bool aBorder = false);
-
-    void ImGuiDebugPanel(const std::string &panelName = "Debug");
-    void UnitTests();
-
-  private:
-    // ------------- Generic utils ------------- //
-
-    static inline ImVec4 U32ColorToVec4(ImU32 in) {
-        float s = 1.0f / 255.0f;
-        return ImVec4(((in >> IM_COL32_A_SHIFT) & 0xFF) * s,
-                      ((in >> IM_COL32_B_SHIFT) & 0xFF) * s,
-                      ((in >> IM_COL32_G_SHIFT) & 0xFF) * s,
-                      ((in >> IM_COL32_R_SHIFT) & 0xFF) * s);
-    }
-    static inline bool  IsUTFSequence(char c) { return (c & 0xC0) == 0x80; }
-    static inline float Distance(const ImVec2 &a, const ImVec2 &b) {
-        float x = a.x - b.x;
-        float y = a.y - b.y;
-        return sqrt(x * x + y * y);
-    }
-    template <typename T> static inline T Max(T a, T b) {
-        return a > b ? a : b;
-    }
-    template <typename T> static inline T Min(T a, T b) {
-        return a < b ? a : b;
-    }
-
     // ------------- Internal ------------- //
-
+  public:
     enum class PaletteIndex {
         Default,
         Keyword,
@@ -274,6 +150,33 @@ class IMGUI_API TextEditor {
 
     typedef std::vector<Glyph> Line;
 
+    enum class UndoOperationType { Add, Delete };
+    struct UndoOperation {
+        std::string             mText;
+        TextEditor::Coordinates mStart;
+        TextEditor::Coordinates mEnd;
+        UndoOperationType       mType;
+    };
+
+    class UndoRecord {
+      public:
+        UndoRecord() {}
+        ~UndoRecord() {}
+
+        UndoRecord(const std::vector<UndoOperation> &aOperations,
+                   TextEditor::EditorState          &aBefore,
+                   TextEditor::EditorState          &aAfter);
+
+        void Undo(TextEditor *aEditor);
+        void Redo(TextEditor *aEditor);
+
+        std::vector<UndoOperation> mOperations;
+
+        EditorState mBefore;
+        EditorState mAfter;
+    };
+
+  public:
     struct LanguageDefinition {
         typedef std::pair<std::string, PaletteIndex> TokenRegexString;
         typedef bool (*TokenizeCallback)(const char   *in_begin,
@@ -302,35 +205,134 @@ class IMGUI_API TextEditor {
         static std::unique_ptr<LanguageDefinition> Lua();
         static std::unique_ptr<LanguageDefinition> Cs();
         static std::unique_ptr<LanguageDefinition> Json();
-        static std::unique_ptr<LanguageDefinition> BrainLuck();
     };
 
-    enum class UndoOperationType { Add, Delete };
-    struct UndoOperation {
-        std::string             mText;
-        TextEditor::Coordinates mStart;
-        TextEditor::Coordinates mEnd;
-        UndoOperationType       mType;
+  public:
+    // ------------- Exposed API ------------- //
+
+    TextEditor();
+    ~TextEditor();
+
+    enum class PaletteId { Dark, Light, Mariana, RetroBlue };
+    enum class LanguageDefinitionId {
+        None,
+        Cpp,
+        C,
+        Cs,
+        Python,
+        Lua,
+        Json,
+        Sql,
+        AngelScript,
+        Glsl,
+        Hlsl,
+    };
+    enum class SetViewAtLineMode {
+        FirstVisibleLine,
+        Centered,
+        LastVisibleLine
     };
 
-    class UndoRecord {
-      public:
-        UndoRecord() {}
-        ~UndoRecord() {}
+    inline void SetReadOnlyEnabled(bool aValue) { mReadOnly = aValue; }
+    inline bool IsReadOnlyEnabled() const { return mReadOnly; }
+    inline void SetAutoIndentEnabled(bool aValue) { mAutoIndent = aValue; }
+    inline bool IsAutoIndentEnabled() const { return mAutoIndent; }
+    inline void SetShowWhitespacesEnabled(bool aValue) {
+        mShowWhitespaces = aValue;
+    }
+    inline bool IsShowWhitespacesEnabled() const { return mShowWhitespaces; }
+    inline void SetShowLineNumbersEnabled(bool aValue) {
+        mShowLineNumbers = aValue;
+    }
+    void SetLanguageDefinition(LanguageDefinitionId aValue);
 
-        UndoRecord(const std::vector<UndoOperation> &aOperations,
-                   TextEditor::EditorState          &aBefore,
-                   TextEditor::EditorState          &aAfter);
+    void         SetLanguageDefinition(std::unique_ptr<LanguageDefinition> def);
+    inline bool  IsShowLineNumbersEnabled() const { return mShowLineNumbers; }
+    inline void  SetShortTabsEnabled(bool aValue) { mShortTabs = aValue; }
+    inline bool  IsShortTabsEnabled() const { return mShortTabs; }
+    inline int   GetLineCount() const { return mLines.size(); }
+    void         SetPalette(PaletteId aValue);
+    PaletteId    GetPalette() const { return mPaletteId; }
+    const char  *GetLanguageDefinitionName() const;
+    void         SetTabSize(int aValue);
+    inline int   GetTabSize() const { return mTabSize; }
+    void         SetLineSpacing(float aValue);
+    inline float GetLineSpacing() const { return mLineSpacing; }
 
-        void Undo(TextEditor *aEditor);
-        void Redo(TextEditor *aEditor);
+    inline static void SetDefaultPalette(PaletteId aValue) {
+        defaultPalette = aValue;
+    }
+    inline static PaletteId GetDefaultPalette() { return defaultPalette; }
 
-        std::vector<UndoOperation> mOperations;
+    void        SelectAll();
+    void        SelectLine(int aLine);
+    void        SelectRegion(int aStartLine, int aStartChar, int aEndLine,
+                             int aEndChar);
+    void        SelectNextOccurrenceOf(const char *aText, int aTextSize,
+                                       bool aCaseSensitive = true);
+    void        SelectAllOccurrencesOf(const char *aText, int aTextSize,
+                                       bool aCaseSensitive = true);
+    bool        AnyCursorHasSelection() const;
+    bool        AllCursorsHaveSelection() const;
+    void        ClearExtraCursors();
+    void        ClearSelections();
+    void        SetCursorPosition(int aLine, int aCharIndex);
+    inline void GetCursorPosition(int &outLine, int &outColumn) const {
+        auto coords = GetSanitizedCursorCoordinates();
+        outLine     = coords.mLine;
+        outColumn   = coords.mColumn;
+    }
+    int  GetFirstVisibleLine();
+    int  GetLastVisibleLine();
+    void SetViewAtLine(int aLine, SetViewAtLineMode aMode);
 
-        EditorState mBefore;
-        EditorState mAfter;
+    void        Copy();
+    void        Cut();
+    void        Paste();
+    void        Undo(int aSteps = 1);
+    void        Redo(int aSteps = 1);
+    inline bool CanUndo() const { return !mReadOnly && mUndoIndex > 0; };
+    inline bool CanRedo() const {
+        return !mReadOnly && mUndoIndex < (int) mUndoBuffer.size();
     };
+    inline int GetUndoIndex() const { return mUndoIndex; };
 
+    void        SetText(const std::string &aText);
+    std::string GetText() const;
+
+    void SetTextLines(const std::vector<std::string> &aLines);
+    std::vector<std::string> GetTextLines() const;
+
+    bool Render(const char *aTitle, bool aParentIsFocused = false,
+                const ImVec2 &aSize = ImVec2(), bool aBorder = false);
+
+    void ImGuiDebugPanel(const std::string &panelName = "Debug");
+    void UnitTests();
+
+  private:
+    // ------------- Generic utils ------------- //
+
+    static inline ImVec4 U32ColorToVec4(ImU32 in) {
+        float s = 1.0f / 255.0f;
+        return ImVec4(((in >> IM_COL32_A_SHIFT) & 0xFF) * s,
+                      ((in >> IM_COL32_B_SHIFT) & 0xFF) * s,
+                      ((in >> IM_COL32_G_SHIFT) & 0xFF) * s,
+                      ((in >> IM_COL32_R_SHIFT) & 0xFF) * s);
+    }
+    static inline bool  IsUTFSequence(char c) { return (c & 0xC0) == 0x80; }
+    static inline float Distance(const ImVec2 &a, const ImVec2 &b) {
+        float x = a.x - b.x;
+        float y = a.y - b.y;
+        return sqrt(x * x + y * y);
+    }
+    template <typename T> static inline T Max(T a, T b) {
+        return a > b ? a : b;
+    }
+    template <typename T> static inline T Min(T a, T b) {
+        return a < b ? a : b;
+    }
+
+  private:
     std::string GetText(const Coordinates &aStart,
                         const Coordinates &aEnd) const;
     std::string GetClipboardText() const;
@@ -419,9 +421,7 @@ class IMGUI_API TextEditor {
     void OnLineChanged(bool aBeforeChange, int aLine, int aColumn,
                        int aCharCount, bool aDeleted);
     void MergeCursorsIfPossible();
-    void SetLanguageDefintion(std::unique_ptr<LanguageDefinition> def) {
-        this->mLanguageDefinition = std::move(def);
-    }
+
     void AddUndo(UndoRecord &aValue);
 
     void Colorize(int aFromLine = 0, int aCount = -1);

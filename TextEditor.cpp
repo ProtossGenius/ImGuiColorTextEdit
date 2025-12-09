@@ -49,51 +49,52 @@ void TextEditor::SetPalette(PaletteId aValue) {
     }
 }
 
-void TextEditor::SetLanguageDefinition(LanguageDefinitionId aValue) {
-    switch (aValue) {
-    case LanguageDefinitionId::None:
-        mLanguageDefinition = nullptr;
-        return;
-    case LanguageDefinitionId::Cpp:
-        mLanguageDefinition = LanguageDefinition::Cpp();
-        break;
-    case LanguageDefinitionId::C:
-        mLanguageDefinition = LanguageDefinition::C();
-        break;
-    case LanguageDefinitionId::Cs:
-        mLanguageDefinition = LanguageDefinition::Cs();
-        break;
-    case LanguageDefinitionId::Python:
-        mLanguageDefinition = LanguageDefinition::Python();
-        break;
-    case LanguageDefinitionId::Lua:
-        mLanguageDefinition = LanguageDefinition::Lua();
-        break;
-    case LanguageDefinitionId::Json:
-        mLanguageDefinition = LanguageDefinition::Json();
-        break;
-    case LanguageDefinitionId::Sql:
-        mLanguageDefinition = LanguageDefinition::Sql();
-        break;
-    case LanguageDefinitionId::AngelScript:
-        mLanguageDefinition = LanguageDefinition::AngelScript();
-        break;
-    case LanguageDefinitionId::Glsl:
-        mLanguageDefinition = LanguageDefinition::Glsl();
-        break;
-    case LanguageDefinitionId::Hlsl:
-        mLanguageDefinition = LanguageDefinition::Hlsl();
-        break;
-    case LanguageDefinitionId::BrainLuck:
-        mLanguageDefinition = LanguageDefinition::BrainLuck();
-    }
-
+void TextEditor::SetLanguageDefinition(
+    std::unique_ptr<LanguageDefinition> def) {
+    this->mLanguageDefinition = std::move(def);
     mRegexList->mValue.clear();
     for (const auto &r : mLanguageDefinition->mTokenRegexStrings)
         mRegexList->mValue.push_back(std::make_pair(
             boost::regex(r.first, boost::regex_constants::optimize), r.second));
 
     Colorize();
+}
+void TextEditor::SetLanguageDefinition(LanguageDefinitionId aValue) {
+    switch (aValue) {
+    case LanguageDefinitionId::None:
+        SetLanguageDefinition(nullptr);
+        return;
+    case LanguageDefinitionId::Cpp:
+        SetLanguageDefinition(LanguageDefinition::Cpp());
+        break;
+    case LanguageDefinitionId::C:
+        SetLanguageDefinition(LanguageDefinition::C());
+        break;
+    case LanguageDefinitionId::Cs:
+        SetLanguageDefinition(LanguageDefinition::Cs());
+        break;
+    case LanguageDefinitionId::Python:
+        SetLanguageDefinition(LanguageDefinition::Python());
+        break;
+    case LanguageDefinitionId::Lua:
+        SetLanguageDefinition(LanguageDefinition::Lua());
+        break;
+    case LanguageDefinitionId::Json:
+        SetLanguageDefinition(LanguageDefinition::Json());
+        break;
+    case LanguageDefinitionId::Sql:
+        SetLanguageDefinition(LanguageDefinition::Sql());
+        break;
+    case LanguageDefinitionId::AngelScript:
+        SetLanguageDefinition(LanguageDefinition::AngelScript());
+        break;
+    case LanguageDefinitionId::Glsl:
+        SetLanguageDefinition(LanguageDefinition::Glsl());
+        break;
+    case LanguageDefinitionId::Hlsl:
+        SetLanguageDefinition(LanguageDefinition::Hlsl());
+        break;
+    }
 }
 
 const char *TextEditor::GetLanguageDefinitionName() const {
