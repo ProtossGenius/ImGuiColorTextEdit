@@ -24,6 +24,15 @@ TextEditor::TextEditor()
 
 TextEditor::~TextEditor() {}
 
+void TextEditor::SetLineAnnotations(
+    const std::unordered_map<int, std::string> &aAnnotations) {
+    mLineAnnotations = aAnnotations;
+}
+
+void TextEditor::ClearLineAnnotations() {
+    mLineAnnotations.clear();
+}
+
 void TextEditor::SetPalette(PaletteId aValue) {
     mPaletteId = aValue;
     const Palette *palletteBase;
@@ -53,6 +62,10 @@ void TextEditor::SetLanguageDefinition(
     std::unique_ptr<LanguageDefinition> def) {
     this->mLanguageDefinition = std::move(def);
     mRegexList->mValue.clear();
+    if (mLanguageDefinition == nullptr) {
+        Colorize();
+        return;
+    }
     for (const auto &r : mLanguageDefinition->mTokenRegexStrings)
         mRegexList->mValue.push_back(std::make_pair(
             boost::regex(r.first, boost::regex_constants::optimize), r.second));
@@ -2359,6 +2372,19 @@ void TextEditor::Render(bool aParentIsFocused) {
                 }
 
                 MoveCharIndexAndColumn(lineNo, charIndex, column);
+            }
+
+            auto ann_it = mLineAnnotations.find(lineNo);
+            if (ann_it != mLineAnnotations.end() && !ann_it->second.empty()) {
+                const int endCol = GetLineMaxColumn(lineNo, mLastVisibleColumn);
+                const float x =
+                    lineStartScreenPos.x + mTextStart +
+                    TextDistanceToLineStart({lineNo, endCol}, false) +
+                    mCharAdvance.x;
+                drawList->AddText(
+                    ImVec2(x, lineStartScreenPos.y),
+                    mPalette[(int) PaletteIndex::ErrorMarker],
+                    ann_it->second.c_str());
             }
         }
     }

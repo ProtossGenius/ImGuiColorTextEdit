@@ -306,6 +306,9 @@ class IMGUI_API TextEditor {
     bool Render(const char *aTitle, bool aParentIsFocused = false,
                 const ImVec2 &aSize = ImVec2(), bool aBorder = false);
 
+    void SetLineAnnotations(const std::unordered_map<int, std::string> &aAnnotations);
+    void ClearLineAnnotations();
+
     void ImGuiDebugPanel(const std::string &panelName = "Debug");
     void UnitTests();
 
@@ -440,6 +443,8 @@ class IMGUI_API TextEditor {
     bool  mShowWhitespaces = true;
     bool  mShowLineNumbers = true;
     bool  mShortTabs       = false;
+
+    std::unordered_map<int, std::string> mLineAnnotations;
 
     int               mSetViewAtLine = -1;
     SetViewAtLineMode mSetViewAtLineMode;
