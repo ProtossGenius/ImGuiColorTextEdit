@@ -33,6 +33,15 @@ void TextEditor::ClearLineAnnotations() {
     mLineAnnotations.clear();
 }
 
+void TextEditor::SetBreakpointLines(const std::unordered_set<int> &lines) {
+    mBreakpointLines = lines;
+}
+
+void TextEditor::SetToggleBreakpointCallback(
+    const std::function<void(int)> &cb) {
+    mToggleBreakpointCallback = cb;
+}
+
 void TextEditor::SetPalette(PaletteId aValue) {
     mPaletteId = aValue;
     const Palette *palletteBase;
@@ -2110,6 +2119,18 @@ void TextEditor::HandleMouseInputs() {
                 Coordinates cursorCoords = ScreenPosToCoordinates(
                     ImGui::GetMousePos(), &isOverLineNumber);
                 if (isOverLineNumber) {
+                    ImVec2 origin = ImGui::GetCursorScreenPos();
+                    float  localX = ImGui::GetMousePos().x - origin.x + 3.0f;
+                    if (localX < (float) mLeftMargin) {
+                        if (mToggleBreakpointCallback) {
+                            mToggleBreakpointCallback(cursorCoords.mLine);
+                        }
+                        SetCursorPosition({cursorCoords.mLine, 0},
+                                          mState.GetLastAddedCursorIndex());
+                        mLastClickTime = (float) ImGui::GetTime();
+                        mLastClickPos  = io.MousePos;
+                        return;
+                    }
                     Coordinates targetCursorPos =
                         cursorCoords.mLine < mLines.size() - 1
                             ? Coordinates{cursorCoords.mLine + 1, 0}
@@ -2243,6 +2264,15 @@ void TextEditor::Render(bool aParentIsFocused) {
 
             // Draw line number (right aligned)
             if (mShowLineNumbers) {
+                if (mBreakpointLines.count(lineNo)) {
+                    const float radius = mCharAdvance.y * 0.28f;
+                    const ImVec2 c = ImVec2(lineStartScreenPos.x +
+                                                (float) mLeftMargin * 0.5f,
+                                            lineStartScreenPos.y +
+                                                mCharAdvance.y * 0.5f);
+                    drawList->AddCircleFilled(
+                        c, radius, mPalette[ (int) PaletteIndex::Breakpoint ]);
+                }
                 snprintf(lineNumberBuffer, 16, "%d  ", lineNo + 1);
                 float lineNoWidth =
                     ImGui::GetFont()

@@ -4,6 +4,7 @@
 #include <array>
 #include <cassert>
 #include <cmath>
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -309,6 +310,9 @@ class IMGUI_API TextEditor {
     void SetLineAnnotations(const std::unordered_map<int, std::string> &aAnnotations);
     void ClearLineAnnotations();
 
+    void SetBreakpointLines(const std::unordered_set<int> &lines);
+    void SetToggleBreakpointCallback(const std::function<void(int)> &cb);
+
     void ImGuiDebugPanel(const std::string &panelName = "Debug");
     void UnitTests();
 
@@ -445,6 +449,8 @@ class IMGUI_API TextEditor {
     bool  mShortTabs       = false;
 
     std::unordered_map<int, std::string> mLineAnnotations;
+    std::unordered_set<int>              mBreakpointLines;
+    std::function<void(int)>             mToggleBreakpointCallback;
 
     int               mSetViewAtLine = -1;
     SetViewAtLineMode mSetViewAtLineMode;
