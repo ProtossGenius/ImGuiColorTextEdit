@@ -206,6 +206,8 @@ void TextEditor::SetViewAtLine(int aLine, SetViewAtLineMode aMode) {
     mSetViewAtLineMode = aMode;
 }
 
+void TextEditor::SetExecutionLine(int aLine) { mExecutionLine = aLine; }
+
 void TextEditor::Copy() {
     if (AnyCursorHasSelection()) {
         std::string clipboardText = GetClipboardText();
@@ -2260,6 +2262,16 @@ void TextEditor::Render(bool aParentIsFocused) {
                         ImVec2{lineStartScreenPos.x + mTextStart + rectEnd,
                                lineStartScreenPos.y + mCharAdvance.y},
                         mPalette[ (int) PaletteIndex::Selection ]);
+            }
+
+            if (mExecutionLine == lineNo) {
+                float thickness = std::max(2.0f, mCharAdvance.y * 0.08f);
+                drawList->AddRectFilled(
+                    ImVec2{lineStartScreenPos.x,
+                           lineStartScreenPos.y + mCharAdvance.y - thickness},
+                    ImVec2{lineStartScreenPos.x + mContentWidth,
+                           lineStartScreenPos.y + mCharAdvance.y},
+                    mPalette[(int) PaletteIndex::ErrorMarker]);
             }
 
             // Draw line number (right aligned)

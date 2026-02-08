@@ -286,6 +286,7 @@ class IMGUI_API TextEditor {
     int  GetFirstVisibleLine();
     int  GetLastVisibleLine();
     void SetViewAtLine(int aLine, SetViewAtLineMode aMode);
+    void SetExecutionLine(int aLine);
 
     void        Copy();
     void        Cut();
@@ -451,6 +452,8 @@ class IMGUI_API TextEditor {
     std::unordered_map<int, std::string> mLineAnnotations;
     std::unordered_set<int>              mBreakpointLines;
     std::function<void(int)>             mToggleBreakpointCallback;
+
+    int mExecutionLine = -1;
 
     int               mSetViewAtLine = -1;
     SetViewAtLineMode mSetViewAtLineMode;
